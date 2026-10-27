@@ -1,0 +1,41 @@
+# Markdown documentation
+*.md
+*.MD
+
+# Dependencies
+node_modules/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Python environments
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Build outputs
+dist/
+build/
+
+# Fabric sample binaries and generated dependencies
+fabric-samples/bin/
+fabric-samples/builders/
+asset-management-gui/web/dist/
+
+# Hyperledger Fabric generated network identities and runtime data
+fabric-samples/test-network/organizations/
+fabric-samples/test-network/channel-artifacts/
+fabric-samples/test-network/system-genesis-block/
+fabric-samples/test-network/*.log
+
+# Local environment configuration
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.sample
+
+# Upstream Hyperledger Fabric samples (download separately)
+fabric-samples/
