@@ -39,3 +39,5 @@ fabric-samples/test-network/*.log
 
 # Upstream Hyperledger Fabric samples (download separately)
 fabric-samples/
+
+!README.md
