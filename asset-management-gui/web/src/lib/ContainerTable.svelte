@@ -1,6 +1,6 @@
 <script>
   import { containers, query, statusFilter, typeFilter, sort } from "../stores.js";
-  import { initials, ownerHue, typeLabel, statusColor, customsBadge, fmtWeight, containerTypeIcon } from "../utils.js";
+  import { initials, ownerHue, typeLabel, statusColor, customsBadge, fmtWeight, fmtLatLon, fmtDateTime, containerTypeIcon } from "../utils.js";
 
   let { loading, onDetail, onTransfer, onEvent, onDamage, onCustoms, onDelete, onSeed } = $props();
 
@@ -46,6 +46,7 @@
         <th>Type</th>
         <th>Status</th>
         <th>Location</th>
+        <th>Position</th>
         <th>Owner</th>
         <th>Cargo</th>
         <th class="num">Gross Wt</th>
@@ -73,6 +74,13 @@
             </span>
           </td>
           <td><span class="mono" style="font-size:13px">{c.Location || "—"}</span></td>
+          <td>
+            {#if c.Position}
+              <span class="mono pos-coord" title={c.Position.Timestamp ? fmtDateTime(c.Position.Timestamp) : "Fix time unknown"}>{fmtLatLon(c.Position)}</span>
+            {:else}
+              <span style="color:var(--text-faint)">—</span>
+            {/if}
+          </td>
           <td>
             <span class="owner-cell">
               <span class="owner-avatar" style="background:hsl({ownerHue(c.Owner)} 55% 42%)">{initials(c.Owner)}</span>
@@ -108,7 +116,7 @@
         </tr>
       {:else}
         <tr>
-          <td colspan="10">
+          <td colspan="11">
             <div class="empty-state">
               <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
               <h3>No containers on the ledger yet</h3>

@@ -9,7 +9,8 @@
     const underCustoms = all.filter((c) => c.CustomsStatus === "Hold" || c.Status === "UnderCustoms").length;
     const damaged = all.filter((c) => c.Status === "Damaged" || c.Status === "Repairing").length;
     const reefers = all.filter((c) => c.Type === "40RH").length;
-    return { total, inTransit, underCustoms, damaged, reefers };
+    const tracked = all.filter((c) => c.Position).length;
+    return { total, inTransit, underCustoms, damaged, reefers, tracked };
   });
 </script>
 
@@ -43,5 +44,11 @@
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="10" x2="6" y2="14"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/></svg>
     </div>
     <div><div class="stat-value">{stats.reefers}</div><div class="stat-label">Active Reefers</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon stat-icon-green">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    </div>
+    <div><div class="stat-value">{stats.tracked}</div><div class="stat-label">Tracked</div></div>
   </div>
 </section>

@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strconv"
 	"time"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
@@ -25,7 +24,7 @@ import (
 
 const (
 	mspID        = "Org1MSP"
-	cryptoPath   = "../../test-network/organizations/peerOrganizations/org1.example.com"
+	cryptoPath   = "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com"
 	certPath     = cryptoPath + "/users/User1@org1.example.com/msp/signcerts"
 	keyPath      = cryptoPath + "/users/User1@org1.example.com/msp/keystore"
 	tlsCertPath  = cryptoPath + "/peers/peer0.org1.example.com/tls/ca.crt"
@@ -77,61 +76,73 @@ func main() {
 	switch command {
 	case "RegisterContainer":
 		if len(os.Args) != 7 {
-			fmt.Println("Usage: go run containercmd.go RegisterContainer <id> <type> <owner> <tareWeight> <destination>")
+			fmt.Println("Usage: go run . RegisterContainer <id> <type> <owner> <tareWeight> <destination>")
 			return
 		}
 		registerContainer(contract, os.Args[2], os.Args[3], os.Args[4], os.Args[5], os.Args[6])
 	case "ReadContainer":
 		if len(os.Args) != 3 {
-			fmt.Println("Usage: go run containercmd.go ReadContainer <id>")
+			fmt.Println("Usage: go run . ReadContainer <id>")
 			return
 		}
 		readContainer(contract, os.Args[2])
 	case "UpdateContainer":
 		if len(os.Args) != 16 {
-			fmt.Println("Usage: go run containercmd.go UpdateContainer <id> <type> <status> <location> <owner> <cargoDesc> <grossWeight> <tareWeight> <sealNumber> <destination> <lastInspection> <tempSetpoint> <billOfLading> <customsStatus>")
+			fmt.Println("Usage: go run . UpdateContainer <id> <type> <status> <location> <owner> <cargoDesc> <grossWeight> <tareWeight> <sealNumber> <destination> <lastInspection> <tempSetpoint> <billOfLading> <customsStatus>")
 			return
 		}
 		updateContainer(contract, os.Args[2], os.Args[3], os.Args[4], os.Args[5], os.Args[6], os.Args[7], os.Args[8], os.Args[9], os.Args[10], os.Args[11], os.Args[12], os.Args[13], os.Args[14], os.Args[15])
 	case "TransferContainer":
 		if len(os.Args) != 4 {
-			fmt.Println("Usage: go run containercmd.go TransferContainer <id> <newOwner>")
+			fmt.Println("Usage: go run . TransferContainer <id> <newOwner>")
 			return
 		}
 		transferContainer(contract, os.Args[2], os.Args[3])
 	case "DeleteContainer":
 		if len(os.Args) != 3 {
-			fmt.Println("Usage: go run containercmd.go DeleteContainer <id>")
+			fmt.Println("Usage: go run . DeleteContainer <id>")
 			return
 		}
 		deleteContainer(contract, os.Args[2])
 	case "ReportEvent":
 		if len(os.Args) != 7 {
-			fmt.Println("Usage: go run containercmd.go ReportEvent <id> <action> <location> <by> <notes>")
+			fmt.Println("Usage: go run . ReportEvent <id> <action> <location> <by> <notes>")
 			return
 		}
 		reportEvent(contract, os.Args[2], os.Args[3], os.Args[4], os.Args[5], os.Args[6])
 	case "ReportDamage":
 		if len(os.Args) != 6 {
-			fmt.Println("Usage: go run containercmd.go ReportDamage <id> <damageType> <description> <reportedBy>")
+			fmt.Println("Usage: go run . ReportDamage <id> <damageType> <description> <reportedBy>")
 			return
 		}
 		reportDamage(contract, os.Args[2], os.Args[3], os.Args[4], os.Args[5])
 	case "UpdateCustoms":
 		if len(os.Args) != 6 {
-			fmt.Println("Usage: go run containercmd.go UpdateCustoms <id> <customsStatus> <by> <notes>")
+			fmt.Println("Usage: go run . UpdateCustoms <id> <customsStatus> <by> <notes>")
 			return
 		}
 		updateCustoms(contract, os.Args[2], os.Args[3], os.Args[4], os.Args[5])
 	case "SetTemperature":
 		if len(os.Args) != 5 {
-			fmt.Println("Usage: go run containercmd.go SetTemperature <id> <tempSetpoint> <by>")
+			fmt.Println("Usage: go run . SetTemperature <id> <tempSetpoint> <by>")
 			return
 		}
 		setTemperature(contract, os.Args[2], os.Args[3], os.Args[4])
+	case "UpdatePosition":
+		if len(os.Args) != 10 {
+			fmt.Println("Usage: go run . UpdatePosition <id> <lat> <lon> <timestamp> <speed> <heading> <source> <temperature>")
+			return
+		}
+		updatePosition(contract, os.Args[2], os.Args[3], os.Args[4], os.Args[5], os.Args[6], os.Args[7], os.Args[8], os.Args[9])
+	case "GetPositionHistory":
+		if len(os.Args) != 3 {
+			fmt.Println("Usage: go run . GetPositionHistory <id>")
+			return
+		}
+		getPositionHistory(contract, os.Args[2])
 	case "GetContainerHistory":
 		if len(os.Args) != 3 {
-			fmt.Println("Usage: go run containercmd.go GetContainerHistory <id>")
+			fmt.Println("Usage: go run . GetContainerHistory <id>")
 			return
 		}
 		getContainerHistory(contract, os.Args[2])
@@ -139,7 +150,7 @@ func main() {
 		getAllContainers(contract)
 	case "QueryContainers":
 		if len(os.Args) != 3 {
-			fmt.Println("Usage: go run containercmd.go QueryContainers <queryJSON>")
+			fmt.Println("Usage: go run . QueryContainers <queryJSON>")
 			return
 		}
 		queryContainers(contract, os.Args[2])
@@ -152,7 +163,7 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Println("Usage: go run containercmd.go [command] [args...]")
+	fmt.Println("Usage: go run . [command] [args...]")
 	fmt.Println("Commands:")
 	fmt.Println("  InitLedger")
 	fmt.Println("  RegisterContainer <id> <type> <owner> <tareWeight> <destination>")
@@ -164,6 +175,8 @@ func printUsage() {
 	fmt.Println("  ReportDamage <id> <damageType> <description> <reportedBy>")
 	fmt.Println("  UpdateCustoms <id> <customsStatus> <by> <notes>")
 	fmt.Println("  SetTemperature <id> <tempSetpoint> <by>")
+	fmt.Println("  UpdatePosition <id> <lat> <lon> <timestamp> <speed> <heading> <source> <temperature>")
+	fmt.Println("  GetPositionHistory <id>")
 	fmt.Println("  GetContainerHistory <id>")
 	fmt.Println("  GetAllContainers")
 	fmt.Println("  QueryContainers <queryJSON>")
@@ -344,6 +357,24 @@ func setTemperature(contract *client.Contract, id string, tempSetpoint string, b
 	fmt.Printf("*** Temperature for %s set to %s°C\n", id, tempSetpoint)
 }
 
+func updatePosition(contract *client.Contract, id string, lat string, lon string, timestamp string, speed string, heading string, source string, temperature string) {
+	fmt.Printf("\n--> Submit Transaction: UpdatePosition\n")
+	_, err := contract.SubmitTransaction("UpdatePosition", id, lat, lon, timestamp, speed, heading, source, temperature)
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+	fmt.Printf("*** Position for %s updated successfully\n", id)
+}
+
+func getPositionHistory(contract *client.Contract, id string) {
+	fmt.Printf("\n--> Evaluate Transaction: GetPositionHistory\n")
+	result, err := contract.EvaluateTransaction("GetPositionHistory", id)
+	if err != nil {
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+	}
+	fmt.Printf("*** Position history for %s:%s\n", id, formatJSON(result))
+}
+
 func getContainerHistory(contract *client.Contract, id string) {
 	fmt.Printf("\n--> Evaluate Transaction: GetContainerHistory\n")
 	result, err := contract.EvaluateTransaction("GetContainerHistory", id)
@@ -368,16 +399,4 @@ func formatJSON(data []byte) string {
 		panic(fmt.Errorf("failed to parse JSON: %w", err))
 	}
 	return prettyJSON.String()
-}
-
-func intOrZero(s string) string {
-	if s == "" {
-		return "0"
-	}
-	return s
-}
-
-func init() {
-	// Suppress unused function warning for strconv — used indirectly via intOrZero callers
-	_ = strconv.Itoa
 }

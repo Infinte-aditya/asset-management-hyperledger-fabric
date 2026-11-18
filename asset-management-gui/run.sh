@@ -11,6 +11,7 @@ FABRIC_BIN="$SCRIPT_DIR/../fabric-samples/bin"
 CHANNEL="${CHANNEL_NAME:-mychannel}"
 CC_NAME="${CHAINCODE_NAME:-container-cc}"
 CC_PATH="../asset-transfer-basic/chaincode-go"
+CC_VERSION="${CC_VERSION:-2.0}"
 
 log() { echo "==> $*"; }
 die() { echo "ERROR: $*" >&2; exit 1; }
@@ -44,11 +45,30 @@ channel_ready() {
   peer_cmd peer channel getinfo -c "$CHANNEL" >/dev/null 2>&1
 }
 
-chaincode_ready() {
+cc_committed_output() {
   peer_cmd peer lifecycle chaincode querycommitted -C "$CHANNEL" --name "$CC_NAME" \
     --peerAddresses localhost:7051 \
-    --tlsRootCertFiles "$TEST_NETWORK/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt" \
-    >/dev/null 2>&1
+    --tlsRootCertFiles "$TEST_NETWORK/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+}
+
+chaincode_ready() {
+  cc_committed_output >/dev/null 2>&1
+}
+
+cc_committed_version() {
+  cc_committed_output | sed -n "/Version:/{s/.*Version: //; s/, Sequence:.*$//; p;}" | head -1 | tr -d ' '
+}
+
+cc_committed_sequence() {
+  cc_committed_output | sed -n "/Version:/{s/.*Sequence: //; s/, Endorsement Plugin:.*$//; p;}" | head -1 | tr -d ' '
+}
+
+# --- Helper: (re)deploy chaincode at a given sequence -----------------------
+deploy_chaincode() {
+  # Sync the source-of-truth chaincode into the fabric-samples copy.
+  # Note: no --delete here -- that would wipe the sample's vendor/ and mocks/.
+  rsync -a "$SCRIPT_DIR/../chaincode/asset-transfer-basic/chaincode-go/" "$SCRIPT_DIR/../fabric-samples/asset-transfer-basic/chaincode-go/"
+  (cd "$TEST_NETWORK" && ./network.sh deployCC -ccn "$CC_NAME" -ccp "$CC_PATH" -ccl go -ccv "$CC_VERSION" -ccs "$1")
 }
 
 # --- 1. Test network ---------------------------------------------------------
@@ -65,11 +85,19 @@ else
 fi
 
 # --- 2. Chaincode ------------------------------------------------------------
-if chaincode_ready; then
-  log "Chaincode '$CC_NAME' already deployed on '$CHANNEL'"
+if ! chaincode_ready; then
+  log "Deploying chaincode '$CC_NAME' v$CC_VERSION (sequence 1)..."
+  deploy_chaincode 1
 else
-  log "Deploying chaincode '$CC_NAME'..."
-  (cd "$TEST_NETWORK" && ./network.sh deployCC -ccn "$CC_NAME" -ccp "$CC_PATH" -ccl go)
+  committed_version="$(cc_committed_version)"
+  if [ "$committed_version" = "$CC_VERSION" ]; then
+    log "Chaincode '$CC_NAME' v$CC_VERSION already deployed on '$CHANNEL'"
+  else
+    # Committed version differs (or is unrecognized): upgrade at the next sequence.
+    next_sequence=$(( $(cc_committed_sequence) + 1 ))
+    log "Upgrading chaincode '$CC_NAME' from ${committed_version:-unknown} to v$CC_VERSION (sequence $next_sequence)..."
+    deploy_chaincode "$next_sequence"
+  fi
 fi
 
 # --- 3. GUI ------------------------------------------------------------------

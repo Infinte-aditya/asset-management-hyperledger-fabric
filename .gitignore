@@ -40,4 +40,10 @@ fabric-samples/test-network/*.log
 # Upstream Hyperledger Fabric samples (download separately)
 fabric-samples/
 
+# Deepwork session state
+.slim/deepwork/
+
+# Local run artifacts (logs/pids from run-all.sh)
+.run/
+
 !README.md

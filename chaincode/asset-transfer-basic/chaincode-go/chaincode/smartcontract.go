@@ -3,6 +3,8 @@ package chaincode
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
@@ -18,6 +20,16 @@ type ContainerEvent struct {
 	Location  string `json:"Location"`
 	By        string `json:"By"`
 	Notes     string `json:"Notes"`
+}
+
+type Position struct {
+	Lat         string `json:"Lat"`
+	Lon         string `json:"Lon"`
+	Timestamp   string `json:"Timestamp"`
+	Speed       string `json:"Speed"`
+	Heading     string `json:"Heading"`
+	Source      string `json:"Source"`
+	Temperature string `json:"Temperature"`
 }
 
 type Container struct {
@@ -36,6 +48,7 @@ type Container struct {
 	TempSetpoint   int              `json:"TempSetpoint"`
 	BillOfLading   string           `json:"BillOfLading"`
 	CustomsStatus  string           `json:"CustomsStatus"`
+	Position       *Position        `json:"Position"`
 	Journey        []ContainerEvent `json:"Journey"`
 }
 
@@ -91,7 +104,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 			ID: "ONEU6543210", Type: "40FR", Status: "Empty",
 			Location: "SGSIN", Owner: "ONE",
 			CargoDesc: "", GrossWeight: 0, TareWeight: 5200,
-			Destination: "SGSIN",
+			Destination:    "SGSIN",
 			LastInspection: "2026-09-28", CustomsStatus: "Clear",
 			Journey: []ContainerEvent{
 				{Timestamp: "2026-09-28T15:00:00Z", Action: "GateOut", Location: "SGSIN", By: "Depot-Ops", Notes: "Discharged empty, returned to depot"},
@@ -143,13 +156,13 @@ func (s *SmartContract) RegisterContainer(ctx contractapi.TransactionContextInte
 	}
 
 	container := Container{
-		ID:           id,
-		Type:         containerType,
-		Status:       "Empty",
-		Location:     destination,
-		Owner:        owner,
-		TareWeight:   tareWeight,
-		Destination:  destination,
+		ID:            id,
+		Type:          containerType,
+		Status:        "Empty",
+		Location:      destination,
+		Owner:         owner,
+		TareWeight:    tareWeight,
+		Destination:   destination,
 		CustomsStatus: "Clear",
 		Journey: []ContainerEvent{
 			{Timestamp: time.Now().UTC().Format(time.RFC3339), Action: "Registered", Location: destination, By: owner, Notes: "Container registered on ledger"},
@@ -200,23 +213,28 @@ func (s *SmartContract) UpdateContainer(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("container %s does not exist", id)
 	}
 
-	container := Container{
-		ID:             id,
-		Type:           containerType,
-		Status:         status,
-		Location:       location,
-		Owner:          owner,
-		CargoDesc:      cargoDesc,
-		GrossWeight:    grossWeight,
-		TareWeight:     tareWeight,
-		NetWeight:      grossWeight - tareWeight,
-		SealNumber:     sealNumber,
-		Destination:    destination,
-		LastInspection: lastInspection,
-		TempSetpoint:   tempSetpoint,
-		BillOfLading:   billOfLading,
-		CustomsStatus:  customsStatus,
+	// Read-modify-write: preserve fields this function doesn't manage
+	// (e.g. the GPS Position and Journey written by UpdatePosition /
+	// ReportEvent), overwriting only the fields managed here.
+	container, err := s.ReadContainer(ctx, id)
+	if err != nil {
+		return err
 	}
+
+	container.Type = containerType
+	container.Status = status
+	container.Location = location
+	container.Owner = owner
+	container.CargoDesc = cargoDesc
+	container.GrossWeight = grossWeight
+	container.TareWeight = tareWeight
+	container.NetWeight = grossWeight - tareWeight
+	container.SealNumber = sealNumber
+	container.Destination = destination
+	container.LastInspection = lastInspection
+	container.TempSetpoint = tempSetpoint
+	container.BillOfLading = billOfLading
+	container.CustomsStatus = customsStatus
 
 	cJSON, err := json.Marshal(container)
 	if err != nil {
@@ -354,10 +372,8 @@ func (s *SmartContract) UpdateCustoms(ctx contractapi.TransactionContextInterfac
 	if customsStatus == "Hold" {
 		container.Status = "UnderCustoms"
 	} else if customsStatus == "Clear" || customsStatus == "Release" {
-		if container.Status == "UnderCustoms" {
-			if container.Location != "" && container.Location != "" {
-				container.Status = "AtPort"
-			}
+		if container.Status == "UnderCustoms" && container.Location != "" {
+			container.Status = "AtPort"
 		}
 	}
 
@@ -417,6 +433,120 @@ func (s *SmartContract) GetContainerHistory(ctx contractapi.TransactionContextIn
 	return container.Journey, nil
 }
 
+func (s *SmartContract) UpdatePosition(ctx contractapi.TransactionContextInterface, id, lat, lon, timestamp, speed, heading, source, temperature string) error {
+	container, err := s.ReadContainer(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	latF, err := strconv.ParseFloat(lat, 64)
+	if err != nil {
+		return fmt.Errorf("invalid latitude %q: %w", lat, err)
+	}
+	if latF < -90 || latF > 90 {
+		return fmt.Errorf("latitude %s out of range (-90 to 90)", lat)
+	}
+
+	lonF, err := strconv.ParseFloat(lon, 64)
+	if err != nil {
+		return fmt.Errorf("invalid longitude %q: %w", lon, err)
+	}
+	if lonF < -180 || lonF > 180 {
+		return fmt.Errorf("longitude %s out of range (-180 to 180)", lon)
+	}
+
+	ts, err := time.Parse(time.RFC3339, timestamp)
+	if err != nil {
+		return fmt.Errorf("invalid timestamp %q: %w", timestamp, err)
+	}
+
+	container.Position = &Position{
+		Lat:         lat,
+		Lon:         lon,
+		Timestamp:   timestamp,
+		Speed:       speed,
+		Heading:     heading,
+		Source:      source,
+		Temperature: temperature,
+	}
+
+	if container.Status == "Loaded" {
+		container.Status = "InTransit"
+		container.Journey = append(container.Journey, ContainerEvent{
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+			Action:    "InTransit",
+			Location:  container.Location,
+			By:        "GPS-Auto",
+			Notes:     "Auto-updated: vessel underway (GPS fix received)",
+		})
+	}
+
+	cJSON, err := json.Marshal(container)
+	if err != nil {
+		return err
+	}
+	err = ctx.GetStub().PutState(id, cJSON)
+	if err != nil {
+		return err
+	}
+
+	positionJSON, err := json.Marshal(container.Position)
+	if err != nil {
+		return err
+	}
+
+	key, err := ctx.GetStub().CreateCompositeKey("position", []string{id, fmt.Sprintf("%019d", ts.UnixNano())})
+	if err != nil {
+		return err
+	}
+	err = ctx.GetStub().PutState(key, positionJSON)
+	if err != nil {
+		return err
+	}
+
+	eventJSON, err := json.Marshal(map[string]string{
+		"id":          id,
+		"lat":         lat,
+		"lon":         lon,
+		"timestamp":   timestamp,
+		"status":      container.Status,
+		"temperature": temperature,
+	})
+	if err != nil {
+		return err
+	}
+	err = ctx.GetStub().SetEvent("UpdatePosition", eventJSON)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *SmartContract) GetPositionHistory(ctx contractapi.TransactionContextInterface, id string) ([]Position, error) {
+	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("position", []string{id})
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var positions []Position
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var pos Position
+		err = json.Unmarshal(queryResponse.GetValue(), &pos)
+		if err != nil {
+			return nil, err
+		}
+		positions = append(positions, pos)
+	}
+	return positions, nil
+}
+
 func (s *SmartContract) GetAllContainers(ctx contractapi.TransactionContextInterface) ([]*Container, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
@@ -431,6 +561,11 @@ func (s *SmartContract) GetAllContainers(ctx contractapi.TransactionContextInter
 			return nil, err
 		}
 
+		// Skip composite-key entries (they contain the \x00 separator), e.g. GPS positions.
+		if strings.ContainsRune(queryResponse.GetKey(), 0) {
+			continue
+		}
+
 		var container Container
 		err = json.Unmarshal(queryResponse.GetValue(), &container)
 		if err != nil {
@@ -443,9 +578,9 @@ func (s *SmartContract) GetAllContainers(ctx contractapi.TransactionContextInter
 
 func (s *SmartContract) QueryContainers(ctx contractapi.TransactionContextInterface, queryJSON string) ([]*Container, error) {
 	var filters struct {
-		Status  string `json:"status"`
-		Type    string `json:"type"`
-		Owner   string `json:"owner"`
+		Status   string `json:"status"`
+		Type     string `json:"type"`
+		Owner    string `json:"owner"`
 		Location string `json:"location"`
 	}
 	err := json.Unmarshal([]byte(queryJSON), &filters)

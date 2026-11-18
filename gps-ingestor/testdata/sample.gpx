@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="gps-ingestor-test">
+  <trk>
+    <trkseg>
+      <trkpt lat="48.1173" lon="-4.4567"><time>2026-09-20T08:00:00Z</time></trkpt>
+      <trkpt lat="48.2" lon="-4.3"><time>2026-09-20T09:00:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

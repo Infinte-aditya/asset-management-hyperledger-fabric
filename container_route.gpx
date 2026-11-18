@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Hyperledger Fabric Test Generator" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Container CONT-UHF-98231A Route</name>
+    <trkseg>
+      <trkpt lat="31.2304" lon="121.4737">
+        <time>2026-11-01T12:00:00Z</time>
+        <desc>In Transit - Ocean Start (Shanghai)</desc>
+      </trkpt>
+      <trkpt lat="30.5" lon="124.0">
+        <time>2026-11-03T00:00:00Z</time>
+        <desc>In Transit - East China Sea</desc>
+      </trkpt>
+      <trkpt lat="32.0" lon="130.0">
+        <time>2026-11-04T12:00:00Z</time>
+        <desc>In Transit - South of Japan</desc>
+      </trkpt>
+      <trkpt lat="35.0" lon="145.0">
+        <time>2026-11-06T00:00:00Z</time>
+        <desc>In Transit - North Pacific</desc>
+      </trkpt>
+      <trkpt lat="38.0" lon="160.0">
+        <time>2026-11-07T12:00:00Z</time>
+        <desc>In Transit - Mid Pacific</desc>
+      </trkpt>
+      <trkpt lat="40.0" lon="-175.0">
+        <time>2026-11-09T00:00:00Z</time>
+        <desc>In Transit - Crossing Dateline</desc>
+      </trkpt>
+      <trkpt lat="38.0" lon="-160.0">
+        <time>2026-11-10T12:00:00Z</time>
+        <desc>In Transit - Northeast Pacific</desc>
+      </trkpt>
+      <trkpt lat="35.0" lon="-140.0">
+        <time>2026-11-12T00:00:00Z</time>
+        <desc>In Transit - Approaching US Coast</desc>
+      </trkpt>
+      <trkpt lat="33.7432" lon="-118.2673">
+        <time>2026-11-13T12:00:00Z</time>
+        <desc>Arrived - Port of Long Beach</desc>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

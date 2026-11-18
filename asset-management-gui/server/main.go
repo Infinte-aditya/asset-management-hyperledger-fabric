@@ -17,6 +17,8 @@
 //	POST   /api/containers/{id}/damage       report container damage
 //	POST   /api/containers/{id}/customs      update customs status
 //	POST   /api/containers/{id}/temperature  set temperature for reefers
+//	GET    /api/containers/{id}/positions    get GPS position history
+//	POST   /api/containers/{id}/position     update GPS position
 //	GET    /api/containers/query             query containers by status/type/owner/location
 //	POST   /api/seed                        load sample data (InitLedger)
 package main
@@ -101,6 +103,16 @@ type tempInput struct {
 	By           string `json:"by"`
 }
 
+type positionInput struct {
+	Lat         string `json:"lat"`
+	Lon         string `json:"lon"`
+	Timestamp   string `json:"timestamp"`
+	Speed       string `json:"speed"`
+	Heading     string `json:"heading"`
+	Source      string `json:"source"`
+	Temperature string `json:"temperature"`
+}
+
 type queryInput struct {
 	Status   string `json:"status"`
 	Type     string `json:"type"`
@@ -140,6 +152,8 @@ func main() {
 	mux.HandleFunc("POST /api/containers/{id}/damage", s.handleReportDamage)
 	mux.HandleFunc("POST /api/containers/{id}/customs", s.handleCustomsAction)
 	mux.HandleFunc("POST /api/containers/{id}/temperature", s.handleSetTemperature)
+	mux.HandleFunc("GET /api/containers/{id}/positions", s.handleGetPositions)
+	mux.HandleFunc("POST /api/containers/{id}/position", s.handleUpdatePosition)
 	mux.HandleFunc("POST /api/seed", s.handleSeed)
 	mux.Handle("/", http.FileServer(http.Dir(resolveWebDir())))
 
@@ -504,6 +518,37 @@ func (s *server) handleSetTemperature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"message": fmt.Sprintf("Temperature for %q set to %d°C", r.PathValue("id"), input.TempSetpoint)})
+}
+
+func (s *server) handleGetPositions(w http.ResponseWriter, r *http.Request) {
+	result, err := s.contract.EvaluateTransaction("GetPositionHistory", r.PathValue("id"))
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	writeRawJSON(w, result)
+}
+
+func (s *server) handleUpdatePosition(w http.ResponseWriter, r *http.Request) {
+	var input positionInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "Invalid JSON body"})
+		return
+	}
+	input.Lat = strings.TrimSpace(input.Lat)
+	input.Lon = strings.TrimSpace(input.Lon)
+	input.Timestamp = strings.TrimSpace(input.Timestamp)
+	if input.Lat == "" || input.Lon == "" || input.Timestamp == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "lat, lon and timestamp are required"})
+		return
+	}
+
+	_, err := s.contract.SubmitTransaction("UpdatePosition", r.PathValue("id"), input.Lat, input.Lon, input.Timestamp, input.Speed, input.Heading, input.Source, input.Temperature)
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"message": fmt.Sprintf("Position for %q updated", r.PathValue("id")), "id": r.PathValue("id")})
 }
 
 func (s *server) handleQueryContainers(w http.ResponseWriter, r *http.Request) {

@@ -36,6 +36,23 @@ export function fmtDateTime(iso) {
   });
 }
 
+export function fmtLatLon(pos) {
+  if (!pos || pos.Lat == null || pos.Lon == null || pos.Lat === "" || pos.Lon === "") return "—";
+  return `${pos.Lat}, ${pos.Lon}`;
+}
+
+export function fmtTemperature(t) {
+  if (t == null || t === "") return "—";
+  const n = Number(t);
+  return Number.isFinite(n) ? `${n.toFixed(1)}°C` : String(t);
+}
+
+export function fmtHeading(h) {
+  if (h == null || h === "") return "—";
+  const n = Number(h);
+  return Number.isFinite(n) ? `${n}°` : String(h);
+}
+
 export function typeLabel(t) {
   const map = {
     "20GP": "20' Dry",
