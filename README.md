@@ -482,6 +482,26 @@ go run . -file /path/to/track.nmea
 
 Supported formats (auto-detected): **NMEA** (`RMC`/`GGA`), **CSV**, **JSON**, **GPX**. Records are mapped to containers by explicit `-container`, by container ID, or by vessel (`Location == "OnBoard:<vessel>"`); unmapped records are skipped with a warning — never guessed. Submissions are rate-limited (`-rate`, default 4/s) and **idempotent**: the track key derives from the container ID and fix time, so re-running the same file does not duplicate history. Run `go run . -h` for all flags.
 
+## Recording GPS stops from the UI
+
+Open any container's detail dialog (or its row's map-pin action) and choose **Add GPS Stop**:
+
+- **Single stop** — enter latitude/longitude only; timestamp defaults to now and source defaults to `GPS:ui`. Click anywhere on the small map to drop a pin, then click **Add stop**.
+- **Bulk paste** — one `lat, lon[, temp]` per line; each fix is spaced 60s apart so the track orders correctly.
+
+The track renders on an OpenStreetMap Leaflet map with antimeridian unwrapping, and Position History shows fix count, distance travelled and elapsed time.
+
+## Example routes
+
+Ready-to-load shipments live in `examples/` (JSON, CSV, GPX). Load any route in one command:
+
+```bash
+./examples/load-example.sh examples/shanghai-rotterdam.csv
+./examples/load-example.sh examples/reefer-atlantic.json 40RH "Reefer Co" 3800 NLRTM
+```
+
+See `examples/README.md` for the full list and per-format instructions.
+
 ## 8. Running Tests
 
 The custom chaincode includes Go tests that use generated mocks shipped with the downloaded Fabric sample. Because the tests import the sample's `mocks` package, run them from the copy inside `fabric-samples` after step 4:

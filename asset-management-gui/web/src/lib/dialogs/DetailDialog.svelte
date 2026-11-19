@@ -134,6 +134,39 @@
   function val(v, fallback = "—") {
     return v ?? fallback;
   }
+
+  function haversineKm(a, b) {
+    const R = 6371;
+    const rad = (d) => (d * Math.PI) / 180;
+    const dLat = rad(b.lat - a.lat);
+    const dLng = rad(b.lng - a.lng);
+    const s =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+  }
+
+  let trackStats = $derived.by(() => {
+    const list = positions;
+    if (!list || list.length === 0) return null;
+    const track = unwrapTrack(list);
+    let km = 0;
+    for (let i = 1; i < track.length; i++) km += haversineKm(track[i - 1], track[i]);
+    const times = list.map((p) => Date.parse(p.Timestamp)).filter((t) => Number.isFinite(t));
+    const durMs = times.length > 1 ? Math.max(...times) - Math.min(...times) : 0;
+    return { count: list.length, km, durMs };
+  });
+
+  function fmtKm(km) {
+    return km >= 100 ? `${Math.round(km).toLocaleString()} km` : `${km.toFixed(0)} km`;
+  }
+
+  function fmtDuration(ms) {
+    if (!ms || ms <= 0) return "—";
+    const h = ms / 3600000;
+    if (h < 24) return `${h.toFixed(h < 10 ? 1 : 0)} h`;
+    return `${(h / 24).toFixed(1)} d`;
+  }
 </script>
 
 <dialog class="dialog dialog-wide" bind:this={dialogEl} onclose={() => (open = false)}>
@@ -234,13 +267,26 @@
       </div>
 
       <div style="margin-top: 20px">
-        <h3 style="font-size:14px;font-weight:600;color:var(--text-dim);margin:0 0 8px;text-transform:uppercase;letter-spacing:0.06em">Position History</h3>
+        <div class="pos-head">
+          <h3>Position History</h3>
+          {#if trackStats}
+            <span class="pos-summary">
+              {trackStats.count} fix{trackStats.count === 1 ? "" : "es"} &middot; {fmtKm(trackStats.km)} &middot; {fmtDuration(trackStats.durMs)}
+            </span>
+          {/if}
+          <button type="button" class="btn btn-sm btn-ghost" onclick={() => onAddPosition?.(container)}>+ Add stop</button>
+        </div>
         {#if posLoading}
           <div class="pos-state">Loading position history…</div>
         {:else if posError}
           <div class="pos-state pos-state-error">{posError}</div>
         {:else if positions.length === 0}
-          <div class="pos-state">No position history recorded yet.</div>
+          <div class="pos-state">
+            No position history recorded yet.
+            <div style="margin-top:10px">
+              <button type="button" class="btn btn-sm btn-primary" onclick={() => onAddPosition?.(container)}>+ Add the first stop</button>
+            </div>
+          </div>
         {:else}
           <div class="track-map" bind:this={mapEl} role="region" aria-label="Route map of recorded positions"></div>
           <ul class="pos-list">
@@ -275,8 +321,20 @@
 <style>
   .dialog-wide { width: min(640px, calc(100vw - 32px)); }
 
-  .pos-live { display: flex; flex-direction: column; gap: 8px; }
-  .pos-coord { font-size: 16px; font-weight: 700; color: #a5a7f8; letter-spacing: 0.01em; }
+  .pos-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px; margin: 14px 0 10px;
+  }
+  .pos-head h3 {
+    font-size: 14px; font-weight: 600; color: var(--text-dim);
+    margin: 0; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .pos-summary {
+    font-size: 12px; color: var(--text-dim);
+    font-family: var(--mono, monospace);
+  }
+
+  .pos-live { display: flex; flex-direction: column; gap: 8px; }  .pos-coord { font-size: 16px; font-weight: 700; color: #a5a7f8; letter-spacing: 0.01em; }
   .pos-meta {
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
     font-size: 12.5px; color: var(--text-dim);

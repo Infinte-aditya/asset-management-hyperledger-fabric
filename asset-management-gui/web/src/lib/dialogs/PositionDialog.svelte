@@ -1,5 +1,7 @@
 <script>
   import { api } from "../../api.js";
+  import L from "leaflet";
+  import "leaflet/dist/leaflet.css";
 
   let { container, open, onDone, onToast } = $props();
 
@@ -16,6 +18,16 @@
   let error = $state("");
   let saving = $state(false);
   let dialogEl;
+
+  let mapEl = $state(null);
+  let mapReady = $state(false);
+  let map = null;
+  let marker = null;
+
+  function validCoord(a, min, max) {
+    const n = Number(a);
+    return Number.isFinite(n) && n >= min && n <= max;
+  }
 
   $effect(() => {
     if (open) {
@@ -39,9 +51,57 @@
     }
   });
 
-  function validCoord(a, min, max) {
-    const n = Number(a);
-    return Number.isFinite(n) && n >= min && n <= max;
+  // Create/destroy the pick map alongside the dialog.
+  $effect(() => {
+    const isOpen = open;
+    const m = mode;
+    const el = mapEl;
+    if (!isOpen || m !== "single" || !el) {
+      if (map) { map.remove(); map = null; marker = null; mapReady = false; }
+      return;
+    }
+    if (map) return;
+    const p = container?.Position;
+    const start = p && validCoord(p.Lat, -90, 90) && validCoord(p.Lon, -180, 180)
+      ? [Number(p.Lat), Number(p.Lon)]
+      : [20, 10];
+    map = L.map(el, { worldCopyJump: true, zoomControl: true, attributionControl: true })
+      .setView(start, p ? 5 : 2);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+    map.on("click", (e) => {
+      lat = e.latlng.lat.toFixed(5);
+      lon = (((e.latlng.lng + 180) % 360 + 360) % 360 - 180).toFixed(5);
+    });
+    mapReady = true;
+    setTimeout(() => map && map.invalidateSize(), 60);
+    return () => {
+      if (map) { map.remove(); map = null; marker = null; mapReady = false; }
+    };
+  });
+
+  // Keep the marker in sync with the coordinate fields (typed or clicked).
+  $effect(() => {
+    if (!mapReady || !map) return;
+    const la = Number(lat), lo = Number(lon);
+    if (!validCoord(lat, -90, 90) || !validCoord(lon, -180, 180)) {
+      if (marker) { marker.remove(); marker = null; }
+      return;
+    }
+    if (!marker) {
+      marker = L.circleMarker([la, lo], {
+        radius: 8, color: "#a5a7f8", weight: 2, fillColor: "#6366f1", fillOpacity: 1,
+      }).addTo(map);
+    } else {
+      marker.setLatLng([la, lo]);
+    }
+  });
+
+  function clearPoint() {
+    lat = ""; lon = "";
+    if (marker) { marker.remove(); marker = null; }
   }
 
   function nowRfc3339(offsetSeconds = 0) {
@@ -67,7 +127,7 @@
     });
   }
 
-  // Parse "lat, lon[, temp]" lines (comma or whitespace separated).
+  // Parse "lat, lon[, temp]" lines (comma, semicolon or whitespace separated).
   function parseBulk(text) {
     const rows = [];
     for (const raw of text.split(/\r?\n/)) {
@@ -90,8 +150,8 @@
       onToast?.(rec.message || "GPS stop added", "success");
       onDone?.();
       if (keepOpen) {
-        // Clear coords so the next stop can be entered quickly.
         lat = ""; lon = ""; speed = ""; heading = "";
+        if (marker) { marker.remove(); marker = null; }
       } else {
         open = false;
       }
@@ -114,11 +174,10 @@
     }
     saving = true;
     let ok = 0, fail = 0, lastErr = "";
-    const base = Date.now();
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       // Space the fixes 60s apart so the track orders correctly.
-      const ts = nowRfc3339(Math.round((base + i * 60000 - Date.now()) / 1000));
+      const ts = nowRfc3339(i * 60);
       try {
         await postOne(container.ID, buildBody(r.lat, r.lon, ts, { temperature: r.temp }));
         ok++;
@@ -167,6 +226,14 @@
       </div>
 
       {#if mode === "single"}
+        <div class="pick-map" bind:this={mapEl} role="region" aria-label="Click the map to choose a coordinate"></div>
+        <div class="map-hint">
+          <span>Click the map to drop a pin, or type coordinates below.</span>
+          {#if lat || lon}
+            <button type="button" class="link-btn" onclick={clearPoint}>Clear</button>
+          {/if}
+        </div>
+
         <div class="field-row">
           <div class="field">
             <label for="pLat">Latitude <span class="req">*</span></label>
@@ -241,6 +308,10 @@
     font-size: 13px; font-weight: 600; padding: 8px 10px; border-radius: 7px; cursor: pointer;
   }
   .mode-tab.active { background: var(--card, #1b2233); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .pick-map { height: 200px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #0f1420; z-index: 0; }
+  .map-hint { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 14px; font-size: 12px; color: var(--text-faint, var(--text-dim)); }
+  .link-btn { border: none; background: none; color: #a5a7f8; font-size: 12px; font-weight: 600; cursor: pointer; padding: 2px 4px; }
+  .link-btn:hover { text-decoration: underline; }
   .hint { margin: 6px 0 14px; font-size: 12px; color: var(--text-faint, var(--text-dim)); line-height: 1.5; }
   .adv { margin: 4px 0 14px; }
   .adv summary { cursor: pointer; font-size: 12.5px; color: var(--text-dim); user-select: none; }
@@ -254,4 +325,5 @@
   }
   textarea:focus { outline: 2px solid var(--accent, #6366f1); outline-offset: 1px; }
   :global(.dialog .mono) { font-family: var(--mono, monospace); }
+  :global(.pick-map .leaflet-container) { background: #0f1420; }
 </style>

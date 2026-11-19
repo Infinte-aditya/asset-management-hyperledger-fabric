@@ -543,6 +543,16 @@ func (s *server) handleUpdatePosition(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "lat and lon are required"})
 		return
 	}
+	latF, err := strconv.ParseFloat(input.Lat, 64)
+	if err != nil || latF < -90 || latF > 90 {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "latitude must be a number between -90 and 90"})
+		return
+	}
+	lonF, err := strconv.ParseFloat(input.Lon, 64)
+	if err != nil || lonF < -180 || lonF > 180 {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "longitude must be a number between -180 and 180"})
+		return
+	}
 	// Convenience: default the fix time to "now" (UTC) and the source to "GPS:ui"
 	// so the UI only needs lat/lon to record a stop.
 	if input.Timestamp == "" {
