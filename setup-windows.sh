@@ -62,6 +62,18 @@ while [ $# -gt 0 ]; do
 done
 
 # ---------------------------------------------------------------------------
+# 0a. Neutralize MSYS/Git-Bash path mangling
+# ---------------------------------------------------------------------------
+# Git Bash rewrites Linux paths like /var/run/docker.sock into
+# C:\Program Files\Git\var\... before Docker sees them, which breaks the
+# test-network socket mount ("mkdir C:\Program Files\Git\var: Access is
+# denied") and stops the peers from starting. Disable that conversion.
+if [ -n "${MSYSTEM:-}" ]; then
+  export MSYS_NO_PATHCONV=1
+  export MSYS2_ARG_CONV_EXCL='*'
+fi
+
+# ---------------------------------------------------------------------------
 # 0. Prerequisites
 # ---------------------------------------------------------------------------
 log "checking prerequisites"
