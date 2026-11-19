@@ -538,9 +538,18 @@ func (s *server) handleUpdatePosition(w http.ResponseWriter, r *http.Request) {
 	input.Lat = strings.TrimSpace(input.Lat)
 	input.Lon = strings.TrimSpace(input.Lon)
 	input.Timestamp = strings.TrimSpace(input.Timestamp)
-	if input.Lat == "" || input.Lon == "" || input.Timestamp == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "lat, lon and timestamp are required"})
+	input.Source = strings.TrimSpace(input.Source)
+	if input.Lat == "" || input.Lon == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "lat and lon are required"})
 		return
+	}
+	// Convenience: default the fix time to "now" (UTC) and the source to "GPS:ui"
+	// so the UI only needs lat/lon to record a stop.
+	if input.Timestamp == "" {
+		input.Timestamp = time.Now().UTC().Format(time.RFC3339)
+	}
+	if input.Source == "" {
+		input.Source = "GPS:ui"
 	}
 
 	_, err := s.contract.SubmitTransaction("UpdatePosition", r.PathValue("id"), input.Lat, input.Lon, input.Timestamp, input.Speed, input.Heading, input.Source, input.Temperature)

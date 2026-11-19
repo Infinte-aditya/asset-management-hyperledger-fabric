@@ -1,0 +1,50 @@
+[
+  {
+    "containerId": "CONT-RF-90877E",
+    "timestamp": "2026-11-04T05:00:00Z",
+    "location": { "latitude": 51.95, "longitude": 4.14 },
+    "temperatureCelsius": -18.0,
+    "status": "In Transit - Depart Rotterdam (reefer)",
+    "txId": "tx_mock_500000"
+  },
+  {
+    "containerId": "CONT-RF-90877E",
+    "timestamp": "2026-11-05T12:00:00Z",
+    "location": { "latitude": 49.4938, "longitude": 0.1077 },
+    "temperatureCelsius": -18.5,
+    "status": "In Transit - Le Havre",
+    "txId": "tx_mock_500001"
+  },
+  {
+    "containerId": "CONT-RF-90877E",
+    "timestamp": "2026-11-06T02:00:00Z",
+    "location": { "latitude": 50.0, "longitude": -2.0 },
+    "temperatureCelsius": -18.0,
+    "status": "In Transit - English Channel",
+    "txId": "tx_mock_500002"
+  },
+  {
+    "containerId": "CONT-RF-90877E",
+    "timestamp": "2026-11-09T00:00:00Z",
+    "location": { "latitude": 47.0, "longitude": -30.0 },
+    "temperatureCelsius": -17.8,
+    "status": "In Transit - North Atlantic",
+    "txId": "tx_mock_500003"
+  },
+  {
+    "containerId": "CONT-RF-90877E",
+    "timestamp": "2026-11-12T08:00:00Z",
+    "location": { "latitude": 44.6488, "longitude": -63.5752 },
+    "temperatureCelsius": -18.2,
+    "status": "In Transit - Halifax",
+    "txId": "tx_mock_500004"
+  },
+  {
+    "containerId": "CONT-RF-90877E",
+    "timestamp": "2026-11-14T20:00:00Z",
+    "location": { "latitude": 40.7128, "longitude": -74.006 },
+    "temperatureCelsius": -18.0,
+    "status": "Arrived - Port of New York",
+    "txId": "tx_mock_500005"
+  }
+]

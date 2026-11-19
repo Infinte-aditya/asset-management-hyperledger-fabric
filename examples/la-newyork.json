@@ -1,0 +1,50 @@
+[
+  {
+    "containerId": "CONT-US-31044D",
+    "timestamp": "2026-11-06T07:00:00Z",
+    "location": { "latitude": 33.7432, "longitude": -118.2673 },
+    "temperatureCelsius": 22.0,
+    "status": "In Transit - Depart Port of LA (rail)",
+    "txId": "tx_mock_400000"
+  },
+  {
+    "containerId": "CONT-US-31044D",
+    "timestamp": "2026-11-07T15:00:00Z",
+    "location": { "latitude": 33.4484, "longitude": -112.074 },
+    "temperatureCelsius": 24.0,
+    "status": "In Transit - Phoenix, AZ",
+    "txId": "tx_mock_400001"
+  },
+  {
+    "containerId": "CONT-US-31044D",
+    "timestamp": "2026-11-09T03:00:00Z",
+    "location": { "latitude": 31.7619, "longitude": -106.485 },
+    "temperatureCelsius": 23.0,
+    "status": "In Transit - El Paso, TX",
+    "txId": "tx_mock_400002"
+  },
+  {
+    "containerId": "CONT-US-31044D",
+    "timestamp": "2026-11-11T11:00:00Z",
+    "location": { "latitude": 32.7767, "longitude": -96.797 },
+    "temperatureCelsius": 22.5,
+    "status": "In Transit - Dallas Intermodal",
+    "txId": "tx_mock_400003"
+  },
+  {
+    "containerId": "CONT-US-31044D",
+    "timestamp": "2026-11-13T05:00:00Z",
+    "location": { "latitude": 35.1495, "longitude": -90.049 },
+    "temperatureCelsius": 21.0,
+    "status": "In Transit - Memphis Hub",
+    "txId": "tx_mock_400004"
+  },
+  {
+    "containerId": "CONT-US-31044D",
+    "timestamp": "2026-11-15T18:00:00Z",
+    "location": { "latitude": 40.7128, "longitude": -74.006 },
+    "temperatureCelsius": 19.5,
+    "status": "Arrived - Port of New York",
+    "txId": "tx_mock_400005"
+  }
+]

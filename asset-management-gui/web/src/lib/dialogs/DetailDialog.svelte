@@ -5,7 +5,7 @@
   import L from "leaflet";
   import "leaflet/dist/leaflet.css";
 
-  let { container, open, onTransfer } = $props();
+  let { container, open, onTransfer, onAddPosition } = $props();
 
   let dialogEl;
   let mapEl = $state(null);
@@ -263,7 +263,11 @@
   <div class="dialog-foot">
     <button type="button" class="btn btn-ghost" onclick={() => (open = false)}>Close</button>
     {#if container}
-      <button type="button" class="btn btn-primary" onclick={() => onTransfer?.(container)}>Transfer…</button>
+      <button type="button" class="btn btn-ghost" onclick={() => onTransfer?.(container)}>Transfer…</button>
+      <button type="button" class="btn btn-primary" onclick={() => onAddPosition?.(container)}>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.2"/></svg>
+        Add GPS Stop
+      </button>
     {/if}
   </div>
 </dialog>

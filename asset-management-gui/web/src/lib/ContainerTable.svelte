@@ -2,7 +2,7 @@
   import { containers, query, statusFilter, typeFilter, sort } from "../stores.js";
   import { initials, ownerHue, typeLabel, statusColor, customsBadge, fmtWeight, fmtLatLon, fmtDateTime, containerTypeIcon } from "../utils.js";
 
-  let { loading, onDetail, onTransfer, onEvent, onDamage, onCustoms, onDelete, onSeed } = $props();
+  let { loading, onDetail, onTransfer, onEvent, onDamage, onCustoms, onDelete, onSeed, onPosition } = $props();
 
   let filtered = $derived.by(() => {
     const all = $containers;
@@ -101,6 +101,9 @@
             <div class="row-actions">
               <button class="icon-btn accent" title="Details" onclick={() => onDetail(c)}>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button class="icon-btn accent" title="Add GPS stop" onclick={() => onPosition(c)}>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.2"/></svg>
               </button>
               <button class="icon-btn accent" title="Report event" onclick={() => onEvent(c)}>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>

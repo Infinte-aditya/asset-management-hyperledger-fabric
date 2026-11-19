@@ -11,6 +11,7 @@
   import DamageDialog from "./lib/dialogs/DamageDialog.svelte";
   import CustomsDialog from "./lib/dialogs/CustomsDialog.svelte";
   import DeleteDialog from "./lib/dialogs/DeleteDialog.svelte";
+  import PositionDialog from "./lib/dialogs/PositionDialog.svelte";
   import Toast from "./lib/Toast.svelte";
 
   let loading = $state(false);
@@ -21,6 +22,7 @@
   let showDamage = $state(false);
   let showCustoms = $state(false);
   let showDelete = $state(false);
+  let showPosition = $state(false);
   let selectedContainer = $state(null);
 
   async function checkHealth() {
@@ -112,6 +114,11 @@
     showDelete = true;
   }
 
+  function handleOpenPosition(c) {
+    selectedContainer = c;
+    showPosition = true;
+  }
+
   function handleRefresh() {
     loadContainers(true);
   }
@@ -190,6 +197,7 @@
     onDamage={handleOpenDamage}
     onCustoms={handleOpenCustoms}
     onDelete={handleOpenDelete}
+    onPosition={handleOpenPosition}
     onSeed={seed}
   />
   <footer class="footer">
@@ -198,10 +206,11 @@
 </main>
 
 <RegisterDialog bind:open={showRegister} onDone={() => loadContainers(true)} onToast={addToast} />
-<DetailDialog container={selectedContainer} bind:open={showDetail} onTransfer={() => { showDetail = false; showTransfer = true; }} />
+<DetailDialog container={selectedContainer} bind:open={showDetail} onTransfer={() => { showDetail = false; showTransfer = true; }} onAddPosition={() => { showDetail = false; showPosition = true; }} />
 <TransferDialog container={selectedContainer} bind:open={showTransfer} onDone={() => loadContainers(true)} onToast={addToast} />
 <EventDialog container={selectedContainer} bind:open={showEvent} onDone={() => loadContainers(true)} onToast={addToast} />
 <DamageDialog container={selectedContainer} bind:open={showDamage} onDone={() => loadContainers(true)} onToast={addToast} />
 <CustomsDialog container={selectedContainer} bind:open={showCustoms} onDone={() => loadContainers(true)} onToast={addToast} />
 <DeleteDialog container={selectedContainer} bind:open={showDelete} onDone={() => loadContainers(true)} onToast={addToast} />
+<PositionDialog container={selectedContainer} bind:open={showPosition} onDone={() => loadContainers(true)} onToast={addToast} />
 <Toast />
